@@ -43,7 +43,3 @@ jobs:
             nc -zv ${{ env.RUNNER_IP }} 2222 && break
             sleep 5
           done
-
-
-      - name: Display connection info
-        run: echo "Connect: ssh -p 2222 myuser@${{ env.RUNNER_IP }}"
