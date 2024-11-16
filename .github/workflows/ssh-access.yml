@@ -13,12 +13,30 @@ jobs:
         run: docker build -t ssh-docker .
 
       - name: Run the Docker container
-        run: docker run -d -p 2222:22 ssh-docker # map port 2222 on the runner to 22 in the container
-      
-      - name: Get runner IP address
+        run: docker run -d -p 2222:22 ssh-docker
+
+      - name: Get runner public IP address (more reliable)
         id: get_runner_ip
         run: |
-          echo "RUNNER_IP=$(ip route get 1 | awk '{print $NF; exit}')" >> $GITHUB_ENV
+          echo "RUNNER_IP=$(curl -s ident.me)" >> $GITHUB_ENV
+          echo "Runner Public IP: ${{ env.RUNNER_IP }}" # Output for easier debugging
 
-      - name: Display connection info # IMPORTANT! You need to get this IP from the workflow run logs
-        run: echo "Connect: ssh -p 2222 myuser@${{ env.RUNNER_IP }}" 
+      - name: Wait for SSH server to start (important!)
+        run: |
+          for i in {1..10}; do  # Retry up to 10 times
+            nc -zv ${{ env.RUNNER_IP }} 2222 && break  # Check if port 2222 is open
+            sleep 5  # Wait 5 seconds before retrying
+          done
+
+      - name: Check SSH server status inside container
+        run: docker exec -it $(docker ps -lq) systemctl status ssh
+
+      - name: Debug SSH config inside container (if needed)
+        run: docker exec -it $(docker ps -lq) cat /etc/ssh/sshd_config
+
+
+      - name: Display connection info
+        run: echo "Connect: ssh -p 2222 myuser@${{ env.RUNNER_IP }}"
+
+      - name: SSH into the container (for testing)
+        run: ssh -o StrictHostKeyChecking=no -p 2222 myuser@${{ env.RUNNER_IP }} "hostname"  # Replace with your actual command
