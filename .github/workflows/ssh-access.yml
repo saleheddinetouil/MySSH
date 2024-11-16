@@ -1,15 +1,22 @@
-name: SSH Access with tmate
+name: SSH Access with tmate and Key-Based Auth
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 
 jobs:
   ssh-access:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code (if needed)
-        uses: actions/checkout@v3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
       - name: Setup tmate session
+        id: tmate
         uses: mxschmitt/action-tmate@v3
+      - name: Check tmate session status
+        if: ${{ steps.tmate.outputs.tmate_success != 'true' }}
+        run: |
+          echo "Error setting up tmate session: ${{ steps.tmate.outputs.tmate_error }}"
+          exit 1
+      - name: Display SSH command and connection details
+        run: |
+          echo "SSH command: ${{ steps.tmate.outputs.ssh_command }}"
+          echo "Session ID: ${{ steps.tmate.outputs.tmate_session_id }}"
+          echo "WebURL: ${{ steps.tmate.outputs.tmate_web_url }}"
