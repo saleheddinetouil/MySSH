@@ -33,10 +33,3 @@ jobs:
 
       - name: Debug SSH config inside container (if needed)
         run: docker exec -it $(docker ps -lq) cat /etc/ssh/sshd_config
-
-
-      - name: Display connection info
-        run: echo "Connect: ssh -p 2222 myuser@${{ env.RUNNER_IP }}"
-
-      - name: SSH into the container (for testing)
-        run: ssh -o StrictHostKeyChecking=no -p 2222 myuser@${{ env.RUNNER_IP }} "hostname"  # Replace with your actual command
