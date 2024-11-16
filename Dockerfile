@@ -13,7 +13,6 @@ RUN mkdir -p /home/saleh/.ssh && \
     chmod 700 /home/saleh/.ssh && \
     touch /home/saleh/.ssh/authorized_keys && \
     chmod 600 /home/saleh/.ssh/authorized_keys && \
-    # Use a heredoc to add the key from the repo secret (more secure)
     tee /home/saleh/.ssh/authorized_keys > /dev/null <<EOF
 ${{ secrets.SSH_PUBLIC_KEY }} # Access public key from GitHub secrets
 EOF
