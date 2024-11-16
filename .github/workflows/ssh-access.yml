@@ -1,0 +1,24 @@
+name: Docker SSH Access
+
+on: workflow_dispatch
+
+jobs:
+  build_and_run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build the Docker image
+        run: docker build -t ssh-docker .
+
+      - name: Run the Docker container
+        run: docker run -d -p 2222:22 ssh-docker # map port 2222 on the runner to 22 in the container
+      
+      - name: Get runner IP address
+        id: get_runner_ip
+        run: |
+          echo "RUNNER_IP=$(ip route get 1 | awk '{print $NF; exit}')" >> $GITHUB_ENV
+
+      - name: Display connection info # IMPORTANT! You need to get this IP from the workflow run logs
+        run: echo "Connect: ssh -p 2222 myuser@${{ env.RUNNER_IP }}" 
