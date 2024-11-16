@@ -5,9 +5,13 @@ on: workflow_dispatch
 jobs:
   build_and_run:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # required for actions/github-script to authenticate with GitHub API and get the runner's public IP
+
     steps:
-      - name: Checkout code
+      - name: Checkout code (if needed)
         uses: actions/checkout@v3
+        if: ${{ github.repository != 'actions/runner' }}
 
       - name: Build the Docker image
         run: docker build -t ssh-docker .
@@ -15,20 +19,31 @@ jobs:
       - name: Run the Docker container
         run: docker run -d -p 2222:22 ssh-docker
 
-      - name: Get GitHub server IP
-        run: |
-          echo "RUNNER_IP=${GITHUB_SERVER_URL%%/*}" >> $GITHUB_ENV # Extract IP from URL
-          echo "GitHub Server IP: ${{ env.RUNNER_IP }}"
+      # Get the public IP of the runner using the GitHub API.
+      # This is more reliable than using external services or trying to infer the IP from routing.
+      - id: get_runner_ip
+        uses: actions/github-script@v6
+        with:
+            script: |
+                const ip = await github.rest.actions.getSelfHostedRunnerGroupForOrg({
+                    org: context.repo.owner,
+                    runner_group_id: context.runner.runnerGroupId
+                })
+                const runner_ip = ip.data.runners[0].name.split('-')[0]
+                core.setOutput('ip', runner_ip)
 
-      - name: Wait for SSH server to start (important!)
+      - name: Runner Public IP
         run: |
-          for i in {1..10}; do  # Retry up to 10 times
-            nc -zv ${{ env.RUNNER_IP }} 2222 && break  # Check if port 2222 is open
-            sleep 5  # Wait 5 seconds before retrying
+          echo "RUNNER_IP=${{ steps.get_runner_ip.outputs.ip }}" >> $GITHUB_ENV
+          echo "Runner Public IP: ${{ env.RUNNER_IP }}"
+
+      - name: Wait for SSH to start
+        run: |
+          for i in {1..10}; do
+            nc -zv ${{ env.RUNNER_IP }} 2222 && break
+            sleep 5
           done
 
-      - name: Check SSH server status inside container
-        run: docker exec -it $(docker ps -lq) systemctl status ssh
 
-      - name: Debug SSH config inside container (if needed)
-        run: docker exec -it $(docker ps -lq) cat /etc/ssh/sshd_config
+      - name: Display connection info
+        run: echo "Connect: ssh -p 2222 myuser@${{ env.RUNNER_IP }}"
