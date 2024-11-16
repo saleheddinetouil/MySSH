@@ -15,10 +15,10 @@ jobs:
       - name: Run the Docker container
         run: docker run -d -p 2222:22 ssh-docker
 
-      - name: Get runner public IP address (with DNS resolution fix)
+      - name: Get GitHub server IP
         run: |
-          echo "RUNNER_IP=$(curl -s --resolve "ident.me:80:91.198.22.70" ident.me)" >> $GITHUB_ENV
-          echo "Runner Public IP: ${{ env.RUNNER_IP }}"
+          echo "RUNNER_IP=${GITHUB_SERVER_URL%%/*}" >> $GITHUB_ENV # Extract IP from URL
+          echo "GitHub Server IP: ${{ env.RUNNER_IP }}"
 
       - name: Wait for SSH server to start (important!)
         run: |
