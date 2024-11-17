@@ -1,28 +1,23 @@
-FROM ubuntu:latest
+FROM alpine:latest
 
-# Install SSH server and other necessary packages
-RUN apt-get update -y -qq && \
-    apt-get install -y -qq openssh-server sudo
+# Install OpenSSH client and other necessary tools
+RUN apk update && apk add --no-cache openssh curl
 
-# Create user and set password (CHANGE THIS!)
-RUN useradd -m saleh && \
-    echo "saleh:Saleh2024@" | chpasswd
+# Set up a directory for SSH
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 
-# Set up SSH key (copy your public key)
-RUN mkdir -p /home/saleh/.ssh && \
-    chmod 700 /home/saleh/.ssh && \
-    touch /home/saleh/.ssh/authorized_keys && \
-    chmod 600 /home/saleh/.ssh/authorized_keys && \
-    tee /home/saleh/.ssh/authorized_keys > /dev/null <<EOF
-${{ secrets.SSH_PUBLIC_KEY }} # Access public key from GitHub secrets
-EOF
+# Optionally copy over known_hosts if you have specific servers you trust
+# COPY known_hosts /root/.ssh/known_hosts
 
+# Install DuckDNS script
+RUN mkdir -p /opt/duckdns
+COPY duckdns.sh /opt/duckdns/duckdns.sh
+RUN chmod +x /opt/duckdns/duckdns.sh
 
-# Disable password authentication
-RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+# Run DuckDNS update script periodically (e.g., every 5 minutes)
+RUN echo "*/5 * * * * /opt/duckdns/duckdns.sh > /dev/null 2>&1" >> /etc/crontabs/root
 
-# Expose SSH port
-EXPOSE 2222
+# Expose port 22 for SSH access
+EXPOSE 22
 
-# Start SSH server with proper initialization for Systemd
-CMD ["/usr/sbin/sshd", "-D", "-e"]
+CMD ["/bin/sh"]
