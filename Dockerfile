@@ -42,4 +42,4 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD pgrep crond || exit 1
 
 # Start crond in the background and run SSH
 ENTRYPOINT ["crond", "-f"]
-CMD ["/bin/sh"]
+CMD ["/bin/sh", "-c", "/opt/noip/noip.sh && /bin/sh"]
