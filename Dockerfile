@@ -11,7 +11,7 @@ RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 COPY noip.sh /opt/noip/noip.sh
 RUN chmod +x /opt/noip/noip.sh
 
-# Create a non-root user
+# Create a non-root user and ensure it's added to passwd file
 RUN adduser -D myuser
 
 # Use a minimal base image
@@ -20,7 +20,8 @@ FROM alpine:3.14
 # Copy necessary files from the builder image
 COPY --from=builder /root/.ssh /root/.ssh
 COPY --from=builder /opt/noip /opt/noip
-COPY --from=builder /etc/crontabs/root /etc/crontabs/root
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
 
 # Install OpenSSH client and crond
 RUN apk update && apk add --no-cache openssh
