@@ -25,7 +25,7 @@ jobs:
       # Run the Docker container and expose port 22
       - name: Run Docker container and expose port
         run: |
-          docker run -e GIT_SSH_COMMAND="ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no" -p 22:22 -d ssh-client
+          docker run -e GIT_SSH_COMMAND="ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no" -p 2222:22 -d ssh-client
 
       # Add an SSH key to access the repo
       - name: Set up SSH
