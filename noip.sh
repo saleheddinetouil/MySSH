@@ -10,3 +10,7 @@ curl -u $USERNAME:$PASSWORD "http://dynupdate.no-ip.com/nic/update?hostname=$HOS
 
 # Display the No-IP hostname
 echo "No-IP hostname updated: $HOSTNAME"
+
+# Display SSH connection info
+echo "SSH connection info:"
+echo "ssh -i /root/.ssh/id_rsa myuser@$HOSTNAME"
